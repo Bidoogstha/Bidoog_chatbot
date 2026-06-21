@@ -1,0 +1,237 @@
+# BIDOOG SHRESTHA — COMPLETE KNOWLEDGE BASE
+# Source: Resume, LinkedIn, GitHub READMEs, Design Doc
+# Last updated: 2026
+
+## PERSONAL INFORMATION
+Name: Bidoog Shrestha
+Email: bshrestha@knox.edu
+Phone: +1 (810) 819-9040
+GitHub: github.com/Bidoogstha
+LinkedIn: linkedin.com/in/bidoog-shrestha-835093282
+Location: Galesburg, Illinois, USA (originally from Kathmandu, Nepal)
+Pronouns: He/Him
+
+## EDUCATION
+Institution: Knox College, Galesburg, Illinois
+Degree: BS in Data Science and Economics (double major)
+GPA: 3.38 / 4.00
+Expected Graduation: June 2029
+Year: Freshman (Class of 2029)
+
+## ABOUT BIDOOG
+Bidoog Shrestha is a freshman at Knox College studying Data Science and Economics. He is originally from Kathmandu, Nepal. He builds intelligent systems and thoughtful digital experiences at the intersection of machine learning, economics, and web development. He won the FinTech track at HackAugie 2026 with MindfulCart — a Chrome extension that adds a 30-second pause before online checkout. He has built end-to-end ML systems trained on over 1.3 million real-world data points. Outside of code, he has taught English and skating to students of all ages, worked as a barista at Himalayan Java Coffee in Kathmandu, and managed digital operations for a family business. He is actively looking for internships in data science, machine learning, and full-stack development.
+
+## TECHNICAL SKILLS
+
+### AI & Workflow Tools
+Claude API, Anthropic SDK, Cursor, Replit, Prompt Engineering, AI System Design
+
+### Programming & Data
+Python, SQL, JavaScript, React, Jupyter Notebook, Git, Excel, JSON, REST APIs, HTML, CSS, Java
+
+### ML & Analytics
+scikit-learn, XGBoost, LightGBM, SHAP, Optuna, Streamlit, Feature Engineering, Fairlearn, Pandas, NumPy, Matplotlib, Plotly
+
+### Workflow & Operations
+Data Pipeline Design, Behavioral Analytics, Funnel Analysis, Reporting Automation
+
+### Finance & Economics
+Financial Modeling, Quantitative Risk Analysis, Loan Portfolio Analysis, Budget Tracking, Macro Analysis, Financial Reporting
+
+### Design
+UI/UX Design, Figma, Web Design, User Interface Design
+
+## PROJECTS
+
+### PROJECT 1: MindfulCart
+GitHub: github.com/moona-dance/mindfulcart
+Hackathon: Won 1st place (FinTech track) at AugieHack 2026 at Augustana College
+Team: Built with Aigerim Nussupova and Altynai Ruslanova in 24 hours
+Category: FinTech / Behavioral Economics / Chrome Extension
+
+What it does:
+MindfulCart is a Chrome extension with a companion web app that intercepts users at the moment of online checkout and adds a 30-second conscious pause before the purchase goes through. It is not designed to stop purchases — only to make them intentional rather than reflexive. Online checkout flows are engineered to minimize friction and maximize impulse buying. MindfulCart adds one small moment of friction back in.
+
+How it works technically:
+- The Chrome extension (Manifest V3) detects when a user is on a checkout page on Amazon or other shopping sites
+- It quietly reads the item name and price from the product page in the background
+- When the user proceeds to checkout, the extension reads that saved data and passes it to the web app via URL parameters
+- The web app asks the user a few questions about their mood and whether they genuinely need the item
+- It shows how many hours of work the purchase costs in real terms
+- The user sees a Canvas API-drawn visualization of their spending patterns
+- Data is stored in localStorage — nothing is sent to external servers
+- The Claude/Anthropic API was integrated to generate personalized purchase summaries, mood-based decision prompts, and spending insights
+
+Technical stack:
+- Frontend: React + Vite
+- Backend: Express.js (Node.js) running on port 3001
+- Extension: Chrome Manifest V3
+- Charts: Raw Canvas API — no chart library used
+- AI: Anthropic Claude API for real-time purchase summaries
+- Data storage: localStorage (privacy-first, nothing leaves the browser)
+
+Bidoog's role:
+- Led backend development
+- Integrated the Claude API
+- Designed prompts and system instructions for personalized recommendations and mood-based decision prompts
+- Built spending visualizations using the Canvas API
+
+Why it won:
+The judges were impressed by the behavioral economics angle — using a 30-second pause to interrupt the impulse buying loop — combined with the technical execution of a full Chrome extension, web app, and AI integration within 24 hours.
+
+### PROJECT 2: Loan Approval ML — End-to-End Binary Classification
+GitHub: github.com/Bidoogstha/loan-approval-ml
+Live demo: https://loan-approval-ml-bidoog.streamlit.app/
+Timeline: March 2026 – Present
+
+What it does:
+An end-to-end binary classification system that predicts loan default risk on 1.3 million real Lending Club loans (2007–2018). Built to demonstrate how a real lending team would approach the problem — not the way most online tutorials do.
+
+Key technical decisions and why:
+- Real data, not synthetic: ~1.3M loans from Kaggle Lending Club dataset, filtered to applications with known outcomes (Fully Paid or Charged Off)
+- The pipeline cleans 150+ raw columns down to 15 predictive features
+- Post-origination features (total_pymnt, recoveries, etc.) are deliberately excluded to prevent target leakage — a trap most beginner notebooks fall into
+- Engineered features: loan-to-income ratio, installment-to-income ratio
+
+Five model families compared:
+1. Logistic Regression — interpretable baseline
+2. Random Forest — strong out-of-the-box, handles non-linearities
+3. XGBoost — state-of-the-art for tabular data
+4. LightGBM — faster than XGBoost, often comparable
+5. Stacking Ensemble — Logistic Regression meta-learner over RF + XGB + LGBM
+
+Each model tuned with Optuna (TPE sampler, 50 trials) optimizing 5-fold cross-validated ROC-AUC.
+Best ROC-AUC: approximately 0.74 — in line with published Lending Club benchmarks.
+
+Fairness Analysis (using Fairlearn):
+Three mathematically distinct fairness metrics measured across two sensitive attributes (US state and income bracket):
+- Demographic parity: PASS — 7.7pp disparity, ratio 0.92 (above four-fifths rule threshold)
+- Calibration by group: FAIL — 11.0pp disparity by state
+- Equalized odds: FAIL — 28-percentage-point TPR gap across US states
+
+What the 28pp gap means: The model is much better at correctly identifying creditworthy borrowers in some states than others. When it predicts 20% default risk, the actual rate in some states is 10% and in others 30%. This is the kind of finding any deployed lending model would face in a fair-lending review. Resolving it would require group-conditional thresholds, fairness-constrained training, or different training data.
+
+This empirically demonstrates the impossibility result from Pleiss et al. (NeurIPS 2017): a model cannot satisfy demographic parity, equalized odds, and calibration simultaneously unless perfectly accurate or base rates are equal.
+
+Explainability:
+- SHAP TreeExplainer for global feature importance and per-prediction waterfall plots
+- Permutation importance and partial dependence plots
+- Interactive What-if explorer in the Streamlit app
+
+Streamlit App (4 tabs):
+1. Predict — real-time risk prediction with SHAP waterfall
+2. Models — comparison across all five model families
+3. Data — EDA and feature distributions
+4. Fairness — per-state and per-income-bracket disparity breakdown
+
+Testing: 16 passing pytest tests
+Limitations honestly documented: no temporal validation yet (random split rather than time-based), equalized odds gap unresolved, threshold 0.5 is rarely optimal in production.
+
+References used: SHAP (Lundberg & Lee 2017), Optuna (Akiba et al. 2019), XGBoost (Chen & Guestrin 2016), LightGBM (Ke et al. 2017), Fairlearn, Hardt et al. 2016 (equalized odds), Kleinberg et al. 2017 (impossibility), Griggs v. Duke Power 1971, CFPB fair lending guidelines.
+
+### PROJECT 3: Macroeconomic Indicator Dashboard
+Timeline: 2026
+Stack: Python, Pandas, NumPy, Matplotlib, API Integration
+
+What it does:
+- Built automated data pipelines to pull live macroeconomic data including CPI, GDP, and unemployment metrics from public APIs
+- Cleaned and organized data into a multi-panel Matplotlib dashboard
+- Designed for non-technical audiences — raw economic data turned into trend charts for faster decision-making
+
+## WORK EXPERIENCE
+
+### Experience Manager — Everest Thanka Treasures
+Location: Thamel, Nepal (Remote)
+Duration: March 2023 – June 2026 (3 years 4 months)
+This is a family business.
+
+Responsibilities:
+- Analyzed user behavior across 3+ digital touchpoints using behavioral modeling and A/B testing to identify funnel drop-offs
+- Improved engagement by 25% and personalized experience outcomes by 20%
+- Built structured tracking systems capturing 1,000+ monthly user interactions
+- Translated behavioral data into insights that informed user acquisition strategy
+- Optimized the digital customer journey
+- Used Wix Website Builder for the company website
+
+### Finance & Operations Intern — Hotel Country Villa
+Location: Nagarkot, Nepal
+Duration: March 2023 – February 2024 (1 year)
+
+Responsibilities:
+- Maintained and reconciled financial records across 4 departments using Excel
+- Built Excel-based reporting systems consolidating data from 3+ financial sources
+- Reduced manual reporting time by 30%
+- Delivered structured insights to inform operational and strategic planning
+
+### Development Assistant — Blanxer
+Location: Bhaktapur, Nepal
+Duration: January 2019 – March 2022 (3 years 3 months)
+
+Responsibilities:
+- Collaborated with cross-functional teams to improve digital product performance using user engagement and retention data
+- Identified 5+ friction points across 2 product lines that informed UI/UX and personalization decisions
+- Supported data-informed product improvements that increased platform retention by 15%
+- Contributed to structured problem-solving across content strategy and user experience decisions
+
+### Barista (Service & Operations Intern) — Himalayan Java Coffee
+Location: Lazimpat, Kathmandu, Nepal (On-site)
+Duration: June 2025 – August 2025 (3 months)
+
+Responsibilities:
+- Served as first point-of-contact for 50+ customers per shift in a fast-paced environment
+- Collaborated with team members during peak hours
+- Strengthened time-management, communication, and teamwork skills
+
+### Skating Teacher — Vidhya Bikash English School
+Location: Kageshwori Manohara-8, Gothatar, Kathmandu (On-site)
+Duration: December 2024 – January 2025 (2 months)
+This was an internship.
+
+Responsibilities:
+- Conducted skating workshops for students Grade 2 through Grade 9 during ECA time
+- Brought multiple pairs of skates from Nepal Roll Ball Organization (NRBA) when students lacked gear
+- Made the workshops both educational and fun, encouraging teamwork
+- No injuries across all workshop sessions
+
+### English Teacher — Bayoca Community School
+Location: Alapaot, Kathmandu (On-site)
+Duration: March 2024 (1 month)
+This was an internship.
+
+Responsibilities:
+- Worked with Grade 5 students
+- Created a positive and welcoming classroom environment
+- Simplified concepts by dividing them into sections
+- Adapted to students' needs and maintained attention
+
+## HACKATHONS
+HackAugie 2026 (AugieHack) at Augustana College:
+- First hackathon Bidoog ever attended
+- Won 1st place in the FinTech track with MindfulCart
+- Team: Bidoog Shrestha, Aigerim Nussupova, Altynai Ruslanova
+- Pulled an all-nighter to build the full product in 24 hours
+- The team had almost given up hope of winning before the announcement
+- One teammate missed a step walking down to collect the award because none of them expected to win
+
+## INTERESTS AND PERSONAL
+- Skating (competitive-level, used to work at Nepal Roll Ball Organization)
+- Teaching (taught English and skating to children)
+- Coffee culture (worked as barista at Himalayan Java Coffee)
+- From Kathmandu, Nepal — brings a cross-cultural perspective to his work
+- Interested in the intersection of behavioral economics and technology (evident in MindfulCart)
+
+## INTERNSHIP AVAILABILITY
+Bidoog is actively looking for internships in:
+- Data Science
+- Machine Learning / AI
+- Full-stack development
+- FinTech
+- Behavioral analytics
+Expected graduation: June 2029
+Currently a freshman at Knox College
+
+## CONTACT
+Email: bshrestha@knox.edu
+GitHub: github.com/Bidoogstha
+LinkedIn: linkedin.com/in/bidoog-shrestha-835093282
+Phone: +1 (810) 819-9040

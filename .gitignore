@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Environment — NEVER commit API keys
+.env
+.env.local
+
+# ChromaDB — rebuilt at startup, don't commit
+backend/chroma_db/
+
+# Model cache — downloaded at build time, don't commit
+.cache/
+sentence_transformers_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

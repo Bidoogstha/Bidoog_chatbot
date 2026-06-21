@@ -1,0 +1,34 @@
+# ══════════════════════════════════════════════════════════════
+# requirements.txt — BIDOOG CHATBOT BACKEND
+# ALL versions are pinned to prevent silent breaking changes.
+# (Wall 3 fix: unpinned langchain caused 15s response times
+#  when a deprecation silently broke caching.)
+# ══════════════════════════════════════════════════════════════
+
+# ── WALL 1 FIX: CPU-only PyTorch ──────────────────────────────
+# sentence-transformers depends on PyTorch.
+# Default PyTorch installs CUDA support = ~4GB.
+# Railway's limit is 4GB total Docker image.
+# Fix: install CPU-only torch FIRST using the official CPU index.
+# This line must come before sentence-transformers.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu
+torchvision==0.18.1+cpu
+
+# ── EMBEDDING MODEL ────────────────────────────────────────────
+sentence-transformers==3.0.1
+
+# ── VECTOR DATABASE ────────────────────────────────────────────
+chromadb==0.5.3
+
+# ── LLM (GEMINI) ───────────────────────────────────────────────
+google-generativeai==0.7.2
+
+# ── WEB FRAMEWORK ──────────────────────────────────────────────
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+pydantic==2.7.4
+
+# ── UTILITIES ──────────────────────────────────────────────────
+python-dotenv==1.0.1
+httpx==0.27.0
