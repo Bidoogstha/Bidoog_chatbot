@@ -22,7 +22,7 @@ sentence-transformers==3.0.1
 chromadb==0.5.3
 
 # ── LLM (GEMINI) ───────────────────────────────────────────────
-google-generativeai==0.7.2
+groq==0.9.0
 
 # ── WEB FRAMEWORK ──────────────────────────────────────────────
 fastapi==0.111.1
