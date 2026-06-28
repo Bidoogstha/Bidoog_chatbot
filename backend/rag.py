@@ -54,3 +54,42 @@ def ask(question):
         temperature=0.4,
     )
     return response.choices[0].message.content.strip()
+
+def ask_stream(question: str):
+    """
+    Streaming version of ask(). Yields chunks of the answer as Groq generates them.
+    Used by the streaming /chat endpoint in main.py.
+    """
+    # 1. Retrieve context from ChromaDB — match your existing ask() exactly
+    results = _collection.query(
+        query_texts=[question],
+        n_results=2
+    )
+    context = "\n\n".join(results["documents"][0])
+    
+    # 2. Build the prompt — copy this from your existing ask() if it's different
+    prompt = f"""You are answering recruiter questions about Bidoog Shrestha.
+Use ONLY the context below. If the answer isn't in the context, say so honestly.
+Keep answers concise — 2-4 sentences unless the question requires more.
+
+CONTEXT:
+{context}
+
+QUESTION: {question}
+
+ANSWER:"""
+    
+    # 3. Call Groq with stream=True
+    stream = _groq.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}],
+        stream=True,
+        temperature=0.3,
+        max_tokens=400,
+    )
+    
+    # 4. Yield each text chunk as Groq sends it
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta

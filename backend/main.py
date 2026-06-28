@@ -17,9 +17,13 @@ Also handles:
 
 import os
 import time
+import asyncio
 import logging
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
+from fastapi.responses import StreamingResponse
+
+import httpx
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,17 +74,27 @@ def is_rate_limited(ip: str) -> bool:
     window.append(now)
     return False
 
+# ── keep-alive ──────────────────────────────────────────
+# Railway sleeps services after ~10 min of no OUTBOUND traffic.
+# Inbound pings (frontend → /health) are ignored by Railway's
+# sleep detection. So we make OUTBOUND requests from the container
+# every 5 minutes to a reliable external host.
+# Docs: https://docs.railway.com/reference/app-sleeping
+
+async def keep_warm():
+    while True:
+        await asyncio.sleep(300)  # 5 minutes
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.get("https://www.google.com")
+            log.info("🔥 keep_warm: outbound ping sent")
+        except Exception as e:
+            log.warning(f"keep_warm ping failed: {e}")
+
 
 # ── startup / shutdown ──────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Runs at container startup — before the first request is served.
-    1. Ingest bidoog.txt into ChromaDB (re-runs on every deploy
-       because Railway filesystem resets — Wall 2 from README)
-    2. Load embedding model + ChromaDB + Gemini into memory
-       so the first real request is fast.
-    """
     log.info("🚀  Starting up...")
 
     log.info("📄  Running ingestion pipeline...")
@@ -91,9 +105,14 @@ async def lifespan(app: FastAPI):
     rag._load_resources()
     log.info("     → All resources loaded. Server is ready.")
 
+    # Start the outbound keep-alive task
+    keep_warm_task = asyncio.create_task(keep_warm())
+    log.info("🔥  keep_warm task started (5-min outbound ping)")
+
     yield   # ← server is live here
 
     log.info("🛑  Shutting down.")
+    keep_warm_task.cancel()
 
 
 # ── app ─────────────────────────────────────────────────
@@ -151,32 +170,23 @@ async def health():
     return {"status": "ok", "service": "bidoog-chatbot"}
 
 
-@app.post("/chat", response_model=ChatResponse, tags=["chat"])
+@app.post("/chat", tags=["chat"])
 async def chat(request: Request, body: ChatRequest):
-    """
-    Main chat endpoint.
-    Applies rate limiting, then runs the RAG pipeline.
-    """
     ip = get_client_ip(request)
-
     if is_rate_limited(ip):
-        raise HTTPException(
-            status_code=429,
-            detail="Too many requests. Please wait a moment before asking again."
-        )
-
-    try:
-        log.info(f"[{ip}] Q: {body.question[:80]}")
-        answer = rag.ask(body.question)
-        log.info(f"[{ip}] A: {answer[:80]}")
-        return ChatResponse(answer=answer)
-
-    except Exception as e:
-        log.error(f"RAG error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Something went wrong. Please try again in a moment."
-        )
+        raise HTTPException(status_code=429, detail="Too many requests.")
+    
+    log.info(f"[{ip}] Q: {body.question[:80]}")
+    
+    def stream_generator():
+        try:
+            for chunk in rag.ask_stream(body.question):
+                yield chunk
+        except Exception as e:
+            log.error(f"RAG streaming error: {e}", exc_info=True)
+            yield "\n\n[Something went wrong. Please try again.]"
+    
+    return StreamingResponse(stream_generator(), media_type="text/plain")
 
 
 # ── dev entry point ─────────────────────────────────────
